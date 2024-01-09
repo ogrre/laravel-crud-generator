@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\{{modelName}};
+use App\Http\Requests\Store{{modelName}}Request;
+use App\Http\Requests\Update{{modelName}}Request;
+
+class {{modelName}}Controller extends Controller
+{
+    public function index()
+    {
+        $items = {{modelName}}::all();
+        return view('{{viewFolder}}.index', compact('items'));
+    }
+
+    public function create()
+    {
+        return view('{{viewFolder}}.create');
+    }
+
+    public function store(Store{{modelName}}Request $request)
+    {
+        {{modelName}}::create($request->validated());
+        return redirect()->route('{{routeName}}.index');
+    }
+
+    public function show({{modelName}} ${{modelNameSingular}})
+    {
+        return view('{{viewFolder}}.show', compact('{{modelNameSingular}}'));
+    }
+
+    public function edit({{modelName}} ${{modelNameSingular}})
+    {
+        return view('{{viewFolder}}.edit', compact('{{modelNameSingular}}'));
+    }
+
+    public function update(Update{{modelName}}Request $request, {{modelName}} ${{modelNameSingular}})
+    {
+        ${{modelNameSingular}}->update($request->validated());
+        return redirect()->route('{{routeName}}.index');
+    }
+
+    public function destroy({{modelName}} ${{modelNameSingular}})
+    {
+        ${{modelNameSingular}}->delete();
+        return redirect()->route('{{routeName}}.index');
+    }
+}
