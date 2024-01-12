@@ -307,5 +307,3 @@ class CrudGeneratorCommand extends Command
         File::append(base_path('routes/web.php'), $routeTemplate);
     }
 }
-
-
