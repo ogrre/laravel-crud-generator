@@ -1,7 +1,3 @@
-# Laravel Chat 🐈 for ChatGPT
-
-
-
 # Laravel CRUD Generator
 
 [![Version](https://img.shields.io/packagist/v/ogrre/laravel-chatgpt.svg?style=flat-square)](https://packagist.org/packages/0grre/laravel-crud-generator)
@@ -55,4 +51,7 @@ You can publish the configuration file and views to customize the generated file
 
 ## Contributing
 Contributions are welcome and will be fully credited. I accept contributions via Pull Requests on Github.
+
+## Support me
+<a href="https://www.buymeacoffee.com/0grre" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
