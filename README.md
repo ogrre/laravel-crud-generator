@@ -1,7 +1,8 @@
 # Laravel CRUD Generator
 
-[![Version](https://img.shields.io/packagist/v/ogrre/laravel-chatgpt.svg?style=flat-square)](https://packagist.org/packages/0grre/laravel-crud-generator)
-[![Licence](https://img.shields.io/github/license/0grre/laravel-chatgpt.svg?style=flat-square)](https://github.com/0grre/laravel-crud-generator/blob/main/LICENCE)
+![Packagist Version](https://img.shields.io/packagist/v/ogrre/laravel-crud-generator)
+![GitHub License](https://img.shields.io/github/license/0grre/laravel-crud-generator)
+![Packagist Downloads](https://img.shields.io/packagist/dt/ogrre/laravel-crud-generator)
 
 This package provides a simple way to generate CRUD (Create, Read, Update, Delete) operations for your Laravel application.
 
@@ -48,9 +49,9 @@ This command will create:
 ## Customization
 You can publish the configuration file and views to customize the generated files:
 
-## Contributing
+# Contributing
 Contributions are welcome and will be fully credited. I accept contributions via Pull Requests on Github.
 
-## Support me
+# Support me
 <a href="https://www.buymeacoffee.com/0grre" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
 
