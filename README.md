@@ -16,7 +16,7 @@ composer require ogrre/laravel-crud-generator
 After the installation, publish the vendor files by executing the command:
 
 ```shell
-php artisan vendor:publish --provider="Ogrre\\CrudGeneratorServiceProvider"
+php artisan vendor:publish --provider="Ogrre\\CrudGenerator\\CrudGeneratorServiceProvider"
 ```
 
 By default, the service provider will be automatically registered in the `app.php` file. However, if needed, you can manually add the service provider in the `config/app.php` file:
@@ -26,7 +26,7 @@ By default, the service provider will be automatically registered in the `app.ph
 
 'providers' => [
     // ...
-    Ogrre\Media\CrudGeneratorServiceProvider::class,
+    Ogrre\CrudGenerator\CrudGeneratorServiceProvider::class,
 ];
 ```
 
@@ -47,7 +47,6 @@ This command will create:
 
 ## Customization
 You can publish the configuration file and views to customize the generated files:
-
 
 ## Contributing
 Contributions are welcome and will be fully credited. I accept contributions via Pull Requests on Github.
