@@ -31,7 +31,7 @@ By default, the service provider will be automatically registered in the `app.ph
 ];
 ```
 
-# Usage
+## Usage
 After installing the package, you can use the command line to generate CRUD operations for a model:
 
 ```bash
