@@ -5,8 +5,10 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Jean-Baptiste Loup",
-            "email": "packagist.botanist124@passinbox.com"
+            "name": "Ogrre",
+            "email": "packagist.botanist124@passinbox.com",
+            "homepage": "https://jbloup.dev",
+            "role": "Developer"
         }
     ],
     "require": {
