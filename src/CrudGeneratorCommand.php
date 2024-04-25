@@ -23,7 +23,7 @@ class CrudGeneratorCommand extends Command
 
     public function handle()
     {
-        $modelName = $this->argument('name');
+        $modelName = Str::singular(Str::ucfirst($this->argument('name')));
         $attributes = $this->askForAttributes();
         $relations = $this->askForRelations();
 
@@ -31,40 +31,35 @@ class CrudGeneratorCommand extends Command
         $this->generateMigration($modelName, $attributes, $relations);
         $this->generateController($modelName);
         $this->generateRequests($modelName, $attributes);
+        $this->generateRoutes($modelName);
 
-        $this->info('CRUD for ' . $modelName . ' generated successfully along with migration.');
+        $this->info('CRUD for ' . $modelName . ' generated successfully along with migration, controller, requests and routes.');
     }
 
-    /**
-     * @return array
-     */
     protected function askForAttributes(): array
     {
         $attributes = [];
         while (true) {
-            $name = $this->ask('Nom de l\'attribut (laisser vide pour terminer)');
+            $name = $this->ask('Attribute name (leave blank to finish)');
 
             if (empty($name)) {
                 break;
             }
 
             $type = $this->choice(
-                'Type de l\'attribut',
+                'Attribute type',
                 ['string', 'integer', 'float', 'boolean', 'date', 'datetime', 'text'],
                 'string'
             );
 
-            $isNullable = $this->confirm('L\'attribut peut-il être nul ?', false);
+            $isNullable = $this->confirm('Can the attribute be nullable?', false);
 
-            $attributes[$name] = ['type' => $type, 'nullable' => $isNullable];
+            $attributes[Str::camel($name)] = ['type' => $type, 'nullable' => $isNullable];
         }
 
         return $attributes;
     }
 
-    /**
-     * @return array
-     */
     protected function askForRelations(): array
     {
         $relations = [];
@@ -81,39 +76,39 @@ class CrudGeneratorCommand extends Command
 
             $relatedModel = $this->ask('Name of the related model');
 
+            if (!class_exists("App\Models\\" . $relatedModel)) {
+                if ($this->confirm("The related model '$relatedModel' does not exist. Do you want to create it?", true)) {
+                    $this->call('make:crud', ['name' => $relatedModel]);
+                }
+            }
+
             $relations[] = ['type' => $relationType, 'model' => $relatedModel];
         }
 
         return $relations;
     }
 
-    /**
-     * @param $modelName
-     * @param $attributes
-     * @param $relations
-     * @return void
-     * @throws FileNotFoundException
-     */
     protected function generateModel($modelName, $attributes, $relations): void
     {
         $modelTemplate = $this->files->get(__DIR__ . '/stubs/model.stub');
 
-        $attributesArray = $this->generateAttributes($attributes);
-        $fillableAttributes = implode(', ', array_map(function ($attr) {
-            return "'$attr'";
-        }, array_keys($attributesArray)));
+        $fillableAttributes = "'" . implode("', '", array_keys($attributes)) . "'";
 
         $modelTemplate = str_replace('{{modelName}}', $modelName, $modelTemplate);
         $modelTemplate = str_replace('{{fillableAttributes}}', $fillableAttributes, $modelTemplate);
         $modelTemplate = str_replace('{{relations}}', $this->generateRelations($relations), $modelTemplate);
 
-        $this->files->put(app_path("/Models/{$modelName}.php"), $modelTemplate);
+        $modelPath = app_path("Models/{$modelName}.php");
+
+        if ($this->files->exists($modelPath)) {
+            if (!$this->confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
+                return;
+            }
+        }
+
+        $this->files->put($modelPath, $modelTemplate);
     }
 
-    /**
-     * @param array $attributes
-     * @return array
-     */
     protected function generateAttributes(array $attributes): array
     {
         $properties = '';
@@ -129,18 +124,15 @@ class CrudGeneratorCommand extends Command
         return compact('properties', 'rules');
     }
 
-    /**
-     * @param array $relations
-     * @return string
-     */
     protected function generateRelations(array $relations): string
     {
         $relationMethods = '';
 
         foreach ($relations as $relation) {
-            $methodName = Str::camel(Str::plural($relation['model']));
-            $relationType = $relation['type'];
             $relatedModelClass = $relation['model'];
+
+            $methodName = in_array($relation['type'], ['hasMany', 'belongsTo']) ? Str::plural(Str::camel($relatedModelClass)) : Str::camel($relatedModelClass);
+            $relationType = $relation['type'];
 
             $relationMethods .= "\n\tpublic function $methodName() {\n";
             $relationMethods .= "\t\treturn \$this->$relationType($relatedModelClass::class);\n";
@@ -150,13 +142,6 @@ class CrudGeneratorCommand extends Command
         return $relationMethods;
     }
 
-    /**
-     * @param $modelName
-     * @param $attributes
-     * @param $relations
-     * @return void
-     * @throws FileNotFoundException
-     */
     protected function generateMigration($modelName, $attributes, $relations): void
     {
         $className = 'Create' . Str::plural(Str::studly($modelName)) . 'Table';
@@ -174,11 +159,6 @@ class CrudGeneratorCommand extends Command
         $this->files->put($migrationPath, $migrationTemplate);
     }
 
-    /**
-     * @param $attributes
-     * @param $relations
-     * @return string
-     */
     protected function generateMigrationColumns($attributes, $relations): string
     {
         $columns = '';
@@ -202,30 +182,35 @@ class CrudGeneratorCommand extends Command
         return $columns;
     }
 
-    /**
-     * @param $modelName
-     * @return void
-     * @throws FileNotFoundException
-     */
     protected function generateController($modelName): void
     {
-        $controllerTemplate = Str::replaceArray(
-            '{{}}',
-            [$modelName, Str::plural($modelName), Str::singular($modelName)],
-            $this->files->get(__DIR__ . '/stubs/controller.stub')
+        $modelNameSingular = Str::singular(Str::snake($modelName));
+        $modelNamePlural = Str::plural(Str::snake($modelName));
+
+        $controllerTemplate = $this->files->get(__DIR__ . '/stubs/controller.stub');
+        $controllerTemplate = str_replace(['{{modelName}}', '{{modelNameSingular}}', '{{modelNamePlural}}', '{{viewFolder}}', '{{routeName}}'],
+            [$modelName, $modelNameSingular, $modelNamePlural, $modelNamePlural, $modelNamePlural],
+            $controllerTemplate
         );
 
-        $this->files->put(app_path("/Http/Controllers/{$modelName}Controller.php"), $controllerTemplate);
+        $modelPath = app_path("/Http/Controllers/{$modelName}Controller.php");
+
+        if ($this->files->exists($modelPath)) {
+            if (!$this->confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
+                return;
+            }
+        }
+
+        $this->files->put($modelPath, $controllerTemplate);
     }
 
-    /**
-     * @param $modelName
-     * @param $attributes
-     * @return void
-     * @throws FileNotFoundException
-     */
     protected function generateRequests($modelName, $attributes)
     {
+        $requestsDirectory = app_path("/Http/Requests/{$modelName}/");
+        if (!file_exists($requestsDirectory)) {
+            mkdir($requestsDirectory, 0755, true);
+        }
+
         foreach (['Store', 'Update'] as $type) {
             $className = "{$type}{$modelName}Request";
             $rules = $this->generateRules($attributes);
@@ -236,14 +221,19 @@ class CrudGeneratorCommand extends Command
             $requestTemplate = str_replace('{{className}}', $className, $requestTemplate);
             $requestTemplate = str_replace('{{rules}}', $formattedRules, $requestTemplate);
 
-            $this->files->put(app_path("/Http/Requests/{$className}.php"), $requestTemplate);
+            $modelPath = $requestsDirectory . "{$className}.php";
+
+            if ($this->files->exists($modelPath)) {
+                if (!$this->confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
+                    return;
+                }
+            }
+
+            $this->files->put($modelPath, $requestTemplate);
         }
     }
 
-    /**
-     * @param $rules
-     * @return string
-     */
+
     protected function formatRulesForStub($rules): string
     {
         return implode(",\n\t\t\t", array_map(function ($key, $rule) {
@@ -251,10 +241,6 @@ class CrudGeneratorCommand extends Command
         }, array_keys($rules), $rules));
     }
 
-    /**
-     * @param $attributes
-     * @return array
-     */
     protected function generateRules($attributes): array
     {
         $rules = [];
@@ -293,16 +279,12 @@ class CrudGeneratorCommand extends Command
         return $rules;
     }
 
-    /**
-     * @param string $modelName
-     * @return void
-     */
     protected function generateRoutes(string $modelName): void
     {
         $modelNamePlural = Str::plural(Str::kebab($modelName));
 
-        $routeTemplate = "\n// Routes for $modelName\n";
-        $routeTemplate .= "Route::resource('$modelNamePlural', '{$modelName}Controller');\n";
+        $routeTemplate = "\n// Routes for {$modelName}\n";
+        $routeTemplate .= "Route::resource('{$modelNamePlural}', App\Http\Controllers\'{$modelName}'Controller::class);\n";
 
         File::append(base_path('routes/web.php'), $routeTemplate);
     }

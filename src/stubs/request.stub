@@ -8,27 +8,13 @@ class {{className}} extends FormRequest
 {
     public function authorize()
     {
-        return true; // Changez cela selon vos besoins d'authentification
+        return true;
     }
 
     public function rules()
     {
         return [
             {{rules}}
-        ];
-    }
-
-    public function messages()
-    {
-        return [
-            // Vous pouvez ajouter des messages de validation personnalisés ici
-        ];
-    }
-
-    public function attributes()
-    {
-        return [
-            // Vous pouvez définir des noms d'attributs plus lisibles pour les messages d'erreur ici
         ];
     }
 }

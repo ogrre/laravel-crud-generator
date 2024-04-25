@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\{{modelName}};
 use App\Http\Requests\Store{{modelName}}Request;
 use App\Http\Requests\Update{{modelName}}Request;
@@ -11,8 +10,9 @@ class {{modelName}}Controller extends Controller
 {
     public function index()
     {
-        $items = {{modelName}}::all();
-        return view('{{viewFolder}}.index', compact('items'));
+        ${{modelNamePlural}} = {{modelName}}::all();
+
+        return view('{{viewFolder}}.index', ['{{modelNamePlural}}' => ${{modelNamePlural}}]);
     }
 
     public function create()
@@ -23,28 +23,35 @@ class {{modelName}}Controller extends Controller
     public function store(Store{{modelName}}Request $request)
     {
         {{modelName}}::create($request->validated());
-        return redirect()->route('{{routeName}}.index');
+
+        return redirect()->route('{{routeName}}.index')->with('success', '{{modelName}} created with success.');
     }
 
     public function show({{modelName}} ${{modelNameSingular}})
     {
-        return view('{{viewFolder}}.show', compact('{{modelNameSingular}}'));
+        return view('{{viewFolder}}.show', [
+            '{{modelNameSingular}}' => ${{modelNameSingular}}
+        ]);
     }
 
     public function edit({{modelName}} ${{modelNameSingular}})
     {
-        return view('{{viewFolder}}.edit', compact('{{modelNameSingular}}'));
+        return view('{{viewFolder}}.edit', [
+            '{{modelNameSingular}}' => ${{modelNameSingular}}
+         ]);
     }
 
     public function update(Update{{modelName}}Request $request, {{modelName}} ${{modelNameSingular}})
     {
         ${{modelNameSingular}}->update($request->validated());
-        return redirect()->route('{{routeName}}.index');
+
+        return redirect()->route('{{routeName}}.index')->with('success', '{{modelName}} updated with success.');
     }
 
     public function destroy({{modelName}} ${{modelNameSingular}})
     {
         ${{modelNameSingular}}->delete();
-        return redirect()->route('{{routeName}}.index');
+
+        return redirect()->route('{{routeName}}.index')->with('success', '{{modelName}} deleted with success.');
     }
 }
