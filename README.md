@@ -4,7 +4,7 @@
 ![GitHub License](https://img.shields.io/github/license/0grre/laravel-crud-generator)
 ![Packagist Downloads](https://img.shields.io/packagist/dt/ogrre/laravel-crud-generator)
 
-This package provides a simple way to generate CRUD (Create, Read, Update, Delete) operations in Controller with Model, Requests and Routes for your Laravel application.
+This package provides a simple way to generate CRUD (Create, Read, Update, Delete) operations in Controller with Model, Requests, Migration and Routes for your Laravel application.
 
 ## Installation:
 
@@ -40,8 +40,8 @@ php artisan make:crud NameOfYourModel
 
 This command will create:
 
-- A new Model (if it does not exist)
-- A new Controller with CRUD methods
+- Model (if it does not exist)
+- Controller with CRUD methods
 - Migration files for the database
 - Requests validation files
 - Update the routes file
