@@ -3,7 +3,6 @@
 namespace Ogrre\CrudGenerator;
 
 use Illuminate\Console\Command;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -219,6 +218,7 @@ class CrudGeneratorCommand extends Command
 
             $requestTemplate = $this->files->get(__DIR__ . '/stubs/request.stub');
             $requestTemplate = str_replace('{{className}}', $className, $requestTemplate);
+            $requestTemplate = str_replace('{{modelName}}', $modelName, $requestTemplate);
             $requestTemplate = str_replace('{{rules}}', $formattedRules, $requestTemplate);
 
             $modelPath = $requestsDirectory . "{$className}.php";
