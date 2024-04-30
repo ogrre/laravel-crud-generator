@@ -3,9 +3,15 @@
 namespace Ogrre\CrudGenerator;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
+use function Laravel\Prompts\info;
 
 class CrudGeneratorCommand extends Command
 {
@@ -32,26 +38,29 @@ class CrudGeneratorCommand extends Command
         $this->generateRequests($modelName, $attributes);
         $this->generateRoutes($modelName);
 
-        $this->info('CRUD for ' . $modelName . ' generated successfully along with migration, controller, requests and routes.');
+        info('CRUD for ' . $modelName . ' generated successfully along with migration, controller, requests and routes.');
     }
 
     protected function askForAttributes(): array
     {
         $attributes = [];
         while (true) {
-            $name = $this->ask('Attribute name (leave blank to finish)');
+            $name = text('Attribute name (leave blank to finish)');
 
             if (empty($name)) {
                 break;
             }
 
-            $type = $this->choice(
-                'Attribute type',
-                ['string', 'integer', 'float', 'boolean', 'date', 'datetime', 'text'],
-                'string'
+            $type = select(
+                label: 'Attribute type',
+                options: ['string', 'integer', 'float', 'boolean', 'date', 'datetime', 'text'],
+                default: 'string'
             );
 
-            $isNullable = $this->confirm('Can the attribute be nullable?', false);
+            $isNullable = confirm(
+                label: 'Can the attribute be nullable?',
+                default: false
+            );
 
             $attributes[Str::camel($name)] = ['type' => $type, 'nullable' => $isNullable];
         }
@@ -63,25 +72,41 @@ class CrudGeneratorCommand extends Command
     {
         $relations = [];
         while (true) {
-            if (!$this->confirm('Do you want to add a relation?', true)) {
+            if (!confirm(
+                label: 'Do you want to add a relation?',
+                default: true
+            )) {
                 break;
             }
 
-            $relationType = $this->choice(
-                'Type of relation',
-                ['hasOne', 'hasMany', 'belongsTo', 'belongsToMany'],
-                'hasOne'
+            $relationType = select(
+                label: 'What role should the user have?',
+                options: [
+                    'hasOne', 'hasMany', 'belongsTo', 'belongsToMany'
+                ],
+                default: 'hasOne'
             );
 
-            $relatedModel = $this->ask('Name of the related model');
+            $relatedModel = text(
+                label: 'Name of the related model',
+                hint: 'Enter the name of the related model (e.g. Role, User, Post)'
+            );
+
+            $nameRelation = text(
+                label: 'Name of the relation',
+                hint: 'Enter the name of the relation (e.g. admin, authors, posts)'
+            );
 
             if (!class_exists("App\Models\\" . $relatedModel)) {
-                if ($this->confirm("The related model '$relatedModel' does not exist. Do you want to create it?", true)) {
+                if (confirm(
+                    label: "The related model '$relatedModel' does not exist. Do you want to create it?",
+                    default: true
+                )) {
                     $this->call('make:crud', ['name' => $relatedModel]);
                 }
             }
 
-            $relations[] = ['type' => $relationType, 'model' => $relatedModel];
+            $relations[] = ['type' => $relationType, 'model' => $relatedModel, 'name' => Str::camel($nameRelation)];
         }
 
         return $relations;
@@ -100,7 +125,10 @@ class CrudGeneratorCommand extends Command
         $modelPath = app_path("Models/{$modelName}.php");
 
         if ($this->files->exists($modelPath)) {
-            if (!$this->confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
+            if (!confirm(
+                label: "The file {$modelPath} already exists. Do you want to overwrite it?",
+                default: false
+            )) {
                 return;
             }
         }
@@ -129,8 +157,9 @@ class CrudGeneratorCommand extends Command
 
         foreach ($relations as $relation) {
             $relatedModelClass = $relation['model'];
+            $nameRelation = $relation['name'];
 
-            $methodName = in_array($relation['type'], ['hasMany', 'belongsTo']) ? Str::plural(Str::camel($relatedModelClass)) : Str::camel($relatedModelClass);
+            $methodName = in_array($relation['type'], ['hasMany', 'belongsTo']) ? Str::plural(Str::camel($nameRelation)) : Str::camel($nameRelation);
             $relationType = $relation['type'];
 
             $relationMethods .= "\n\tpublic function $methodName() {\n";
@@ -195,7 +224,7 @@ class CrudGeneratorCommand extends Command
         $modelPath = app_path("/Http/Controllers/{$modelName}Controller.php");
 
         if ($this->files->exists($modelPath)) {
-            if (!$this->confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
+            if (!confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
                 return;
             }
         }
@@ -224,7 +253,7 @@ class CrudGeneratorCommand extends Command
             $modelPath = $requestsDirectory . "{$className}.php";
 
             if ($this->files->exists($modelPath)) {
-                if (!$this->confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
+                if (!confirm("The file {$modelPath} already exists. Do you want to overwrite it?", false)) {
                     return;
                 }
             }
@@ -284,7 +313,7 @@ class CrudGeneratorCommand extends Command
         $modelNamePlural = Str::plural(Str::kebab($modelName));
 
         $routeTemplate = "\n// Routes for {$modelName}\n";
-        $routeTemplate .= "Route::resource('{$modelNamePlural}', App\Http\Controllers\'{$modelName}'Controller::class);\n";
+        $routeTemplate .= "Route::resource('{$modelNamePlural}', App\Http\Controllers\\" . $modelName ."Controller::class);\n";
 
         File::append(base_path('routes/web.php'), $routeTemplate);
     }
